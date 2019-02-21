@@ -10,6 +10,7 @@ import {
     FlatList,
     StyleSheet,
     Dimensions,
+    Platform,
     PanResponder,
     TouchableOpacity,
     ActivityIndicator,
@@ -77,6 +78,7 @@ const SCALE_MULTIPLIER = 1.2;
 const SCALE_MAX_MULTIPLIER = 3;
 const FREEZE_SCROLL_DISTANCE = 15;
 const BACKGROUND_OPACITY_MULTIPLIER = 0.003;
+const windowSize = Dimensions.get('window');
 
 function createStyles({screenWidth, screenHeight}) {
     return StyleSheet.create({
@@ -142,7 +144,7 @@ const generatePanHandlers = (onStart, onMove, onRelease): any =>
     });
 
 const getScale = (currentDistance: number, initialDistance: number): number =>
-    currentDistance / initialDistance * SCALE_MULTIPLIER;
+    (currentDistance / initialDistance) * SCALE_MULTIPLIER;
 const pow2abs = (a: number, b: number): number => Math.pow(Math.abs(a - b), 2);
 
 function getDistance(touches: Array<TouchType>): number {
@@ -709,7 +711,7 @@ export default class ImageView extends Component<PropsType, StateType> {
                 } else {
                     nextTranslate =
                         screenSize / 2 -
-                        imageSize * (scale / imageInitialScale) / 2;
+                        (imageSize * (scale / imageInitialScale)) / 2;
                 }
 
                 return nextTranslate;
@@ -757,6 +759,21 @@ export default class ImageView extends Component<PropsType, StateType> {
                 duration: 200,
                 useNativeDriver: true,
             }).start();
+        }
+    }
+
+    detectIphoneX() {
+        if (
+            Platform.OS === 'ios' &&
+            !Platform.isPad &&
+            !Platform.isTVOS &&
+            (windowSize.height === 812 ||
+            windowSize.width === 812 || // iPhone X and iPhone XS
+                (windowSize.height === 896 || windowSize.width === 896)) // iPhone XS Max and XR
+        ) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -809,7 +826,19 @@ export default class ImageView extends Component<PropsType, StateType> {
                             this.close();
                         }}
                     >
-                        <Text style={styles.closeButton__text}>×</Text>
+                        {!this.detectIphoneX() && (
+                            <Text style={[styles.closeButton__text]}>×</Text>
+                        )}
+                        {this.detectIphoneX() && (
+                            <Text
+                                style={[
+                                    styles.closeButton__text,
+                                    {marginTop: 20},
+                                ]}
+                            >
+                                ×
+                            </Text>
+                        )}
                     </TouchableOpacity>
                 </Animated.View>
                 <FlatList
